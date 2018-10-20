@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -29,7 +28,7 @@ func getAPI(w http.ResponseWriter, r *http.Request) {
 
 // Returns all track IDs if any
 func getTrackIDs(w http.ResponseWriter, r *http.Request) {
-	render.JSON(w, r, dbGetTrackIDs())
+	render.JSON(w, r, GlobalDB.GetAll())
 }
 
 // Adds a new track to db
@@ -39,7 +38,7 @@ func postTrack(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid body", http.StatusBadRequest)
 	} else if url, ok := data["url"]; !ok {
 		http.Error(w, "Missing url", http.StatusBadRequest)
-	} else if id, err := dbPostTrack(url); err != nil {
+	} else if id, err := GlobalDB.Add(url); err != nil {
 		http.Error(w, "Url does not contain track data", http.StatusBadRequest)
 	} else {
 		response := make(map[string]int)
@@ -51,7 +50,7 @@ func postTrack(w http.ResponseWriter, r *http.Request) {
 // Returns track with specific ID if existing
 func getTrack(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	if data, err := dbGetTrack(id); err != nil {
+	if data, err := GlobalDB.GetTrack(id); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	} else {
 		render.JSON(w, r, data)
@@ -61,25 +60,14 @@ func getTrack(w http.ResponseWriter, r *http.Request) {
 // Returns specific track field if ID and field exist
 func getTrackField(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	if data, err := dbGetTrack(id); err != nil {
+	if data, err := GetTrack(id); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	} else {
 		field := chi.URLParam(r, "field")
-		if fieldValue, err := data.dbField(field); err != nil {
+		if fieldValue, err := data.GetField(field); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		} else {
 			render.JSON(w, r, fieldValue)
 		}
 	}
-}
-
-// GetPort port
-func GetPort() string {
-	var port = os.Getenv("PORT")
-
-	if port == "" {
-		port = "8080"
-
-	}
-	return ":" + port
 }

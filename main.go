@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -12,7 +13,7 @@ var startTime time.Time
 
 func main() {
 	startTime = time.Now()
-	dbInit()
+	Init()
 
 	router := chi.NewRouter()
 	router.Route("/paragliding", func(r chi.Router) {
@@ -40,12 +41,13 @@ func main() {
 				})
 			})
 		})
-		r.Route("/admin", func(r chi.Router) {
-			r.Route("/api", func(r chi.Router) {
-				//r.Get("/tracks_count/", )
-				//r.Delete("/tracks/", )
-			})
+	})
+	//
+	router.Route("/admin", func(r chi.Router) {
+		r.Route("/api", func(r chi.Router) {
+			//r.Get("/tracks_count/", )
+			//r.Delete("/tracks/", )
 		})
 	})
-	log.Fatal(http.ListenAndServe(GetPort(), router)) // set listen port
+	log.Fatal(http.ListenAndServe(":"+os.Getenv("PORT"), router)) // set listen port
 }
