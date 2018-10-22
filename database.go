@@ -26,7 +26,7 @@ func (db *TrackMongoDB) Init() {
 	defer session.Close()
 
 	index := mgo.Index{
-		Key:        []string{"glider_id"},
+		Key:        []string{"TrackID"},
 		Unique:     true,
 		DropDups:   true,
 		Background: true,
@@ -54,7 +54,7 @@ func (db *TrackMongoDB) GetAll() []int {
 		return []int{}
 	}
 
-	return GetAll(tracks)
+	return TrackIDs(tracks)
 }
 
 // Add TODO
@@ -66,7 +66,7 @@ func (db *TrackMongoDB) Add(url string) (int, error) {
 	defer session.Close()
 
 	// Parses url and returns track object
-	track, err := Add(url)
+	track, err := Parse(url)
 	if err != nil {
 		return 0, err
 	}

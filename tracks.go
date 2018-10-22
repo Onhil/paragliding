@@ -30,8 +30,8 @@ type Track struct {
 	TrackLength float64       `json:"track_length"`
 }
 
-// GetAll TODO
-func GetAll(db []Track) []int {
+// TrackIDs TODO
+func TrackIDs(db []Track) []int {
 	// Stores all existing ID's in a slice
 	ids := make([]int, 0)
 	for id := range db {
@@ -41,8 +41,8 @@ func GetAll(db []Track) []int {
 	return ids
 }
 
-// Add TODO
-func Add(url string) (Track, error) {
+// Parse TODO
+func Parse(url string) (Track, error) {
 	track, err := igc.ParseLocation(url)
 	if err != nil {
 		return Track{}, err
