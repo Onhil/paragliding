@@ -13,7 +13,12 @@ var startTime time.Time
 
 func main() {
 	startTime = time.Now()
-	Init()
+	GlobalDB = &TrackMongoDB{
+		"mongodb://localhost",
+		"ParaglidingDB",
+		"Tracks",
+	}
+	GlobalDB.Init()
 
 	router := chi.NewRouter()
 	router.Route("/paragliding", func(r chi.Router) {

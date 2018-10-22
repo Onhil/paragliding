@@ -60,7 +60,7 @@ func getTrack(w http.ResponseWriter, r *http.Request) {
 // Returns specific track field if ID and field exist
 func getTrackField(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	if data, err := GetTrack(id); err != nil {
+	if data, err := GlobalDB.GetTrack(id); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	} else {
 		field := chi.URLParam(r, "field")

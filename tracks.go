@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
-	"strconv"
 	"time"
 
+	"github.com/globalsign/mgo/bson"
 	"github.com/marni/goigc"
 )
 
@@ -17,27 +17,21 @@ type TrackStorage interface {
 	GetAll() []int
 	Add(url string) (int, error)
 	GetTrack(idURL string) (Track, error)
-	GetField(field string) (string, error)
 }
 
 // Track data
 type Track struct {
-	HDate       time.Time `json:"H_date"`
-	Pilot       string    `json:"pilot"`
-	Glider      string    `json:"glider"`
-	GliderID    string    `json:"glider_id"`
-	TrackLength float64   `json:"track_length"`
-}
-
-var db map[int]Track
-
-// Init TODO
-func Init() {
-	db = make(map[int]Track)
+	ID          bson.ObjectId `bson:"_id,omitempty"`
+	TrackID     int           `json:"trackid"`
+	HDate       time.Time     `json:"H_date"`
+	Pilot       string        `json:"pilot"`
+	Glider      string        `json:"glider"`
+	GliderID    string        `json:"glider_id"`
+	TrackLength float64       `json:"track_length"`
 }
 
 // GetAll TODO
-func GetAll() []int {
+func GetAll(db []Track) []int {
 	// Stores all existing ID's in a slice
 	ids := make([]int, 0)
 	for id := range db {
@@ -48,37 +42,37 @@ func GetAll() []int {
 }
 
 // Add TODO
-func Add(url string) (int, error) {
+func Add(url string) (Track, error) {
 	track, err := igc.ParseLocation(url)
 	if err != nil {
-		return 0, err
+		return Track{}, err
 	}
 
 	// Calulates total distance of track data
-	dis := 0.0
+	distance := 0.0
 	for i := 0; i < len(track.Points)-1; i++ {
-		dis += track.Points[i].Distance(track.Points[i+1])
+		distance += track.Points[i].Distance(track.Points[i+1])
 	}
-	// Next index in db
-	id := len(db) + 1
+	id := len(GlobalDB.GetAll())
 
-	// Adds track to db
-	db[id] = Track{
+	trac := Track{
+		TrackID:     id,
 		HDate:       track.Date,
 		Pilot:       track.Pilot,
 		Glider:      track.GliderType,
 		GliderID:    track.GliderID,
-		TrackLength: dis,
+		TrackLength: distance,
 	}
-	return id, nil
+	return trac, nil
 }
 
+/*
 // GetTrack TODO
-func GetTrack(idURL string) (Track, error) {
+func GetTrack(id string) (Track, error) {
 	var track Track
 
 	// Converts ID to int
-	id, err := strconv.Atoi(idURL)
+	id, err := strconv.Atoi(id)
 	if err != nil {
 		return track, errors.New("Invalid ID")
 	}
@@ -88,8 +82,9 @@ func GetTrack(idURL string) (Track, error) {
 	if ok {
 		return data, nil
 	}
-	return track, errors.New("Track ID " + idURL + " does not exist")
+	return track, errors.New("Track ID " + id + " does not exist")
 }
+*/
 
 // GetField TODO
 func (track *Track) GetField(field string) (string, error) {
