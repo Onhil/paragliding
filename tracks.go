@@ -21,13 +21,14 @@ type TrackStorage interface {
 
 // Track data
 type Track struct {
-	ID          bson.ObjectId `bson:"_id,omitempty"`
-	TrackID     int           `json:"trackid"`
-	HDate       time.Time     `json:"H_date"`
-	Pilot       string        `json:"pilot"`
-	Glider      string        `json:"glider"`
-	GliderID    string        `json:"glider_id"`
-	TrackLength float64       `json:"track_length"`
+	ID             bson.ObjectId `bson:"_id,omitempty"`
+	TrackID        int           `json:"trackid"`
+	HDate          time.Time     `json:"H_date"`
+	Pilot          string        `json:"pilot"`
+	Glider         string        `json:"glider"`
+	GliderID       string        `json:"glider_id"`
+	TrackLength    float64       `json:"track_length"`
+	TrackSourceURL string        `json:"track_src_url"`
 }
 
 // TrackIDs TODO
@@ -53,15 +54,16 @@ func Parse(url string) (Track, error) {
 	for i := 0; i < len(track.Points)-1; i++ {
 		distance += track.Points[i].Distance(track.Points[i+1])
 	}
-	id := len(GlobalDB.GetAll())
+	id := len(GlobalDB.GetAll()) + 1
 
 	trac := Track{
-		TrackID:     id,
-		HDate:       track.Date,
-		Pilot:       track.Pilot,
-		Glider:      track.GliderType,
-		GliderID:    track.GliderID,
-		TrackLength: distance,
+		TrackID:        id,
+		HDate:          track.Date,
+		Pilot:          track.Pilot,
+		Glider:         track.GliderType,
+		GliderID:       track.GliderID,
+		TrackLength:    distance,
+		TrackSourceURL: url,
 	}
 	return trac, nil
 }
