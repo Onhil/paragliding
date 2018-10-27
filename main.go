@@ -6,16 +6,26 @@ import (
 	"os"
 	"time"
 
+	"github.com/globalsign/mgo"
 	"github.com/go-chi/chi"
 )
 
 var startTime time.Time
+var session *mgo.Session
 
 func main() {
 	startTime = time.Now()
+	mongoDialInfo := &mgo.DialInfo{
+		Addrs:    []string{os.Getenv("mongodb://@ds145562.mlab.com:45562/paragliding")},
+		Timeout:  60 * time.Second,
+		Database: os.Getenv("paragliding"),
+		Username: os.Getenv("admin"),
+		Password: os.Getenv("admin1"),
+	}
 	GlobalDB = &TrackMongoDB{
-		"mongodb://localhost",
-		"ParaglidingDB",
+		*mongoDialInfo,
+		"mongodb://admin:admin1@ds145562.mlab.com:45562/paragliding",
+		"paragliding",
 		"Tracks",
 	}
 	GlobalDB.Init()
