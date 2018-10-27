@@ -31,6 +31,15 @@ type Track struct {
 	TrackSourceURL string        `json:"track_src_url"`
 }
 
+// Ticker data
+type Ticker struct {
+	Latest     string        `json:"t_latest"`
+	Start      string        `json:"t_start"`
+	Stop       string        `json:"t_stop"`
+	Tracks     []Track       `json:"tracks"`
+	Processing time.Duration `json:"processing"`
+}
+
 // TrackIDs TODO
 func TrackIDs(db []Track) []int {
 	// Stores all existing ID's in a slice
