@@ -34,7 +34,8 @@ func (db *TrackMongoDB) Init() {
 		Background: true,
 		Sparse:     true,
 	}
-	err = session.DB(db.DatabaseName).C(db.TrackCollectionName).EnsureIndex(index)
+	err = session.DB(db.DatabaseName).C(db.TrackCollectionName).
+		EnsureIndex(index)
 	if err != nil {
 		panic(err)
 	}
@@ -50,7 +51,8 @@ func (db *TrackMongoDB) GetAll() []int {
 
 	var tracks []Track
 
-	err = session.DB(db.DatabaseName).C(db.TrackCollectionName).Find(bson.M{}).All(&tracks)
+	err = session.DB(db.DatabaseName).C(db.TrackCollectionName).
+		Find(bson.M{}).All(&tracks)
 	if err != nil {
 		return []int{}
 	}
@@ -73,7 +75,8 @@ func (db *TrackMongoDB) Add(url string) (int, error) {
 	}
 
 	// Inserts track into mongoDB database
-	err = session.DB(db.DatabaseName).C(db.TrackCollectionName).Insert(track)
+	err = session.DB(db.DatabaseName).C(db.TrackCollectionName).
+		Insert(track)
 
 	if err != nil {
 		fmt.Printf("error in Insert(): %v", err.Error())
@@ -96,10 +99,13 @@ func (db *TrackMongoDB) GetTrack(id string) (Track, error) {
 	if err != nil {
 		return track, errors.New("Invalid ID")
 	}
-	err = session.DB(db.DatabaseName).C(db.TrackCollectionName).Find(bson.M{"trackid": ids}).One(&track)
+	err = session.DB(db.DatabaseName).C(db.TrackCollectionName).
+		Find(bson.M{"trackid": ids}).One(&track)
 	if err != nil {
 		return Track{}, err
 	}
+	return track, nil
+}
 
 	return track, nil
 }
