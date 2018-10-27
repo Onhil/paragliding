@@ -107,5 +107,22 @@ func (db *TrackMongoDB) GetTrack(id string) (Track, error) {
 	return track, nil
 }
 
+// ObjectID(_id).getTimestamp()
+
+//TickerLatest TODO
+func (db *TrackMongoDB) TickerLatest() (Track, error) {
+	session, err := mgo.Dial(db.DatabaseURL)
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+
+	var track Track
+
+	err = session.DB(db.DatabaseName).C(db.TrackCollectionName).
+		Find(nil).Skip(len(GlobalDB.GetAll()) - 1).One(&track)
+	if err != nil {
+		return Track{}, err
+	}
 	return track, nil
 }
