@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
@@ -12,6 +14,7 @@ var GlobalDB TrackStorage
 
 // TrackMongoDB TODO
 type TrackMongoDB struct {
+	DatabaseInfo        mgo.DialInfo
 	DatabaseURL         string
 	DatabaseName        string
 	TrackCollectionName string
@@ -24,7 +27,6 @@ func (db *TrackMongoDB) Init() {
 		panic(err)
 	}
 	defer session.Close()
-
 	index := mgo.Index{
 		Key:        []string{"TrackID"},
 		Unique:     true,
@@ -32,7 +34,6 @@ func (db *TrackMongoDB) Init() {
 		Background: true,
 		Sparse:     true,
 	}
-
 	err = session.DB(db.DatabaseName).C(db.TrackCollectionName).EnsureIndex(index)
 	if err != nil {
 		panic(err)
@@ -91,8 +92,11 @@ func (db *TrackMongoDB) GetTrack(id string) (Track, error) {
 	defer session.Close()
 
 	var track Track
-
-	err = session.DB(db.DatabaseName).C(db.TrackCollectionName).Find(bson.M{"TrackID": id}).One(&track)
+	ids, err := strconv.Atoi(id)
+	if err != nil {
+		return track, errors.New("Invalid ID")
+	}
+	err = session.DB(db.DatabaseName).C(db.TrackCollectionName).Find(bson.M{"trackid": ids}).One(&track)
 	if err != nil {
 		return Track{}, err
 	}
