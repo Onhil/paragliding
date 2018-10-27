@@ -34,8 +34,8 @@ type Track struct {
 func TrackIDs(db []Track) []int {
 	// Stores all existing ID's in a slice
 	ids := make([]int, 0)
-	for id := range db {
-		ids = append(ids, id)
+	for i := range db {
+		ids = append(ids, db[i].TrackID)
 	}
 	sort.Ints(ids)
 	return ids
