@@ -29,7 +29,6 @@ func main() {
 		"Tracks",
 	}
 	GlobalDB.Init()
-
 	router := chi.NewRouter()
 	router.Route("/paragliding", func(r chi.Router) {
 		r.Route("/api", func(r chi.Router) {
@@ -64,5 +63,8 @@ func main() {
 			//r.Delete("/tracks/", )
 		})
 	})
-	log.Fatal(http.ListenAndServe(":"+os.Getenv("PORT"), router)) // set listen port
+	//log.Fatal(http.ListenAndServe(":"+os.Getenv("PORT"), router)) // set listen port
+
+	// localtesting
+	log.Fatal(http.ListenAndServe(":8080", router)) // set listen port
 }
