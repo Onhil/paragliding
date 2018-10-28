@@ -12,7 +12,7 @@ import (
 // GlobalDB interface for database use
 var GlobalDB TrackStorage
 
-// TrackMongoDB TODO
+// TrackMongoDB is a struct with all neccessary MongoDB info
 type TrackMongoDB struct {
 	DatabaseInfo        mgo.DialInfo
 	DatabaseURL         string
@@ -20,7 +20,7 @@ type TrackMongoDB struct {
 	TrackCollectionName string
 }
 
-// Init TODO
+// Init intializes MongoDB
 func (db *TrackMongoDB) Init() {
 	session, err := mgo.Dial(db.DatabaseURL)
 	if err != nil {
@@ -41,7 +41,7 @@ func (db *TrackMongoDB) Init() {
 	}
 }
 
-// GetAll TODO
+// GetAll makes a slice with all TrackID's
 func (db *TrackMongoDB) GetAll() []int {
 	session, err := mgo.Dial(db.DatabaseURL)
 	if err != nil {
@@ -51,16 +51,18 @@ func (db *TrackMongoDB) GetAll() []int {
 
 	var tracks []Track
 
+	// Puts all tracks in a Track slice
 	err = session.DB(db.DatabaseName).C(db.TrackCollectionName).
 		Find(bson.M{}).All(&tracks)
 	if err != nil {
 		return []int{}
 	}
 
+	// Returns a slice with all TrackID's
 	return TrackIDs(tracks)
 }
 
-// Add TODO
+// Add a track to the mongoDB
 func (db *TrackMongoDB) Add(url string) (int, error) {
 	session, err := mgo.Dial(db.DatabaseURL)
 	if err != nil {
@@ -86,7 +88,7 @@ func (db *TrackMongoDB) Add(url string) (int, error) {
 	return track.TrackID, nil
 }
 
-// GetTrack TODO
+// GetTrack gets track wid a a specific TrackID
 func (db *TrackMongoDB) GetTrack(id string) (Track, error) {
 	session, err := mgo.Dial(db.DatabaseURL)
 	if err != nil {
@@ -94,11 +96,13 @@ func (db *TrackMongoDB) GetTrack(id string) (Track, error) {
 	}
 	defer session.Close()
 
+	// Converts the id string to int
 	var track Track
 	ids, err := strconv.Atoi(id)
 	if err != nil {
 		return track, errors.New("Invalid ID")
 	}
+	// Finds track with a TrackID
 	err = session.DB(db.DatabaseName).C(db.TrackCollectionName).
 		Find(bson.M{"trackid": ids}).One(&track)
 	if err != nil {
@@ -107,9 +111,7 @@ func (db *TrackMongoDB) GetTrack(id string) (Track, error) {
 	return track, nil
 }
 
-// ObjectID(_id).getTimestamp()
-
-//TickerLatest TODO
+//TickerLatest returns latest added track
 func (db *TrackMongoDB) TickerLatest() (Track, error) {
 	session, err := mgo.Dial(db.DatabaseURL)
 	if err != nil {

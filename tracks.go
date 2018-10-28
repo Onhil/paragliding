@@ -40,7 +40,7 @@ type Ticker struct {
 	Processing time.Duration `json:"processing"`
 }
 
-// TrackIDs TODO
+// TrackIDs makes a slice with all TrackID's
 func TrackIDs(db []Track) []int {
 	// Stores all existing ID's in a slice
 	ids := make([]int, 0)
@@ -51,7 +51,7 @@ func TrackIDs(db []Track) []int {
 	return ids
 }
 
-// Parse TODO
+// Parse url and makes a Track
 func Parse(url string) (Track, error) {
 	track, err := igc.ParseLocation(url)
 	if err != nil {
@@ -97,7 +97,7 @@ func GetTrack(id string) (Track, error) {
 }
 */
 
-// GetField TODO
+// GetField gets a specific json field in a Track
 func (track *Track) GetField(field string) (string, error) {
 	// Returns the field that matches the given struct json tag
 	value := reflect.ValueOf(track).Elem()
