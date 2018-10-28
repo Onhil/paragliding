@@ -16,10 +16,11 @@ var GlobalDB TrackStorage
 
 // TrackMongoDB is a struct with all neccessary MongoDB info
 type TrackMongoDB struct {
-	DatabaseInfo        mgo.DialInfo
-	DatabaseURL         string
-	DatabaseName        string
-	TrackCollectionName string
+	DatabaseInfo          mgo.DialInfo
+	DatabaseURL           string
+	DatabaseName          string
+	TrackCollectionName   string
+	WebhookCollectionName string
 }
 
 // Init intializes MongoDB
@@ -223,4 +224,94 @@ func (db *TrackMongoDB) TickerTimestamp(ts string) (Ticker, error) {
 		Processing: time.Since(proccess),
 	}
 	return ticker, nil
+}
+
+// GetAllWebhooks gets all
+func (db *TrackMongoDB) GetAllWebhooks() []int {
+	session, err := mgo.Dial(db.DatabaseURL)
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+
+	var webhooks []Webhooks
+
+	collection := session.DB(db.DatabaseName).C(db.WebhookCollectionName)
+
+	err = collection.Find(nil).All(&webhooks)
+	if err != nil {
+		return []int{}
+	}
+	return WebhookIDs(webhooks)
+}
+
+// AddWebhook inserts webhook information into MongoDB
+func (db *TrackMongoDB) AddWebhook(url string, value int) (int, error) {
+	session, err := mgo.Dial(db.DatabaseURL)
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+
+	// TODO make sure you cannot add the same url twice
+
+	// Creates webhook from data
+	webhook, err := CreateWebhook(url, value)
+	if err != nil {
+		return 0, err
+	}
+
+	// Inserts webhook into mongoDB database
+	err = session.DB(db.DatabaseName).C(db.WebhookCollectionName).
+		Insert(webhook)
+	if err != nil {
+		return 0, err
+	}
+
+	return webhook.WebhookID, nil
+}
+
+// GetWebhook returns webhook with a specific id
+func (db *TrackMongoDB) GetWebhook(id string) (Webhooks, error) {
+	session, err := mgo.Dial(db.DatabaseURL)
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+
+	var webhook Webhooks
+
+	ids, err := strconv.Atoi(id)
+	if err != nil {
+		return Webhooks{}, errors.New("Invalid ID")
+	}
+
+	// Returns webhook with specific id
+	collection := session.DB(db.DatabaseName).C(db.WebhookCollectionName)
+	err = collection.Find(bson.M{"webhookid": ids}).One(&webhook)
+	if err != nil {
+		return Webhooks{}, err
+	}
+
+	return webhook, nil
+}
+
+// DeleteWebhook removes webhook from MongoDB with a specific id
+func (db *TrackMongoDB) DeleteWebhook(id string) (Webhooks, error) {
+	session, err := mgo.Dial(db.DatabaseURL)
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+
+	webhook, err := db.GetWebhook(id)
+
+	// Removes webhook with a specific id
+	collection := session.DB(db.DatabaseName).C(db.WebhookCollectionName)
+	err = collection.Remove(bson.M{"webhookid": webhook.WebhookID})
+	if err != nil {
+		return Webhooks{}, err
+	}
+
+	return webhook, nil
 }

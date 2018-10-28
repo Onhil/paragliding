@@ -28,6 +28,7 @@ func main() {
 		"mongodb://admin:admin1@ds145562.mlab.com:45562/paragliding",
 		"paragliding",
 		"Tracks",
+		"Webhooks",
 	}
 	paging = 5
 	GlobalDB.Init()
@@ -48,12 +49,12 @@ func main() {
 				r.Get("/", getTicker)
 				r.Get("/{timestamp:[A-Za-z0-9_]+}/", getTickerTimestamp)
 			})
-			r.Route("/weebhook", func(r chi.Router) {
+			r.Route("/webhook", func(r chi.Router) {
 				r.Route("/new_track", func(r chi.Router) {
-					//r.Post("/", )
-					r.Route("/webhook_id:[0-9]+}", func(r chi.Router) {
-						//r.Get("/", )
-						//r.Delete("/", )
+					r.Post("/", postWebhook)
+					r.Route("/{webhook_id:[0-9]+}", func(r chi.Router) {
+						r.Get("/", getWebhookID)
+						r.Delete("/", deleteWebhookID)
 					})
 				})
 			})

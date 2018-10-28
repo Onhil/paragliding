@@ -97,3 +97,44 @@ func getTickerTimestamp(w http.ResponseWriter, r *http.Request) {
 		render.JSON(w, r, ticker)
 	}
 }
+
+// Adds a webhook to MongoDB with trigger info
+func postWebhook(w http.ResponseWriter, r *http.Request) {
+	var data Webhooks
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		http.Error(w, "Invalid body", http.StatusBadRequest)
+	}
+	if data.MinTriggerValue == 0 {
+		data.MinTriggerValue = 1
+	}
+
+	if data.WebhookURL == "" {
+		http.Error(w, "Missing WebhookURL", http.StatusBadRequest)
+	} else if id, err := GlobalDB.AddWebhook(data.WebhookURL, data.MinTriggerValue); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	} else {
+		response := make(map[string]int)
+		response["id"] = id
+		render.JSON(w, r, response)
+	}
+}
+
+// Returns webhook with id
+func getWebhookID(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "webhook_id")
+	if webhook, err := GlobalDB.GetWebhook(id); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	} else {
+		render.JSON(w, r, webhook)
+	}
+}
+
+// Deletes webhook with id
+func deleteWebhookID(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "webhook_id")
+	if webhook, err := GlobalDB.DeleteWebhook(id); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	} else {
+		render.JSON(w, r, webhook)
+	}
+}
