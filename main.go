@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/globalsign/mgo"
@@ -11,20 +10,12 @@ import (
 )
 
 var startTime time.Time
-var session *mgo.Session
+var sessions *mgo.Session
 var paging int
 
 func main() {
 	startTime = time.Now()
-	mongoDialInfo := &mgo.DialInfo{
-		Addrs:    []string{"mongodb://admin:admin1@ds145562.mlab.com:45562/paragliding"},
-		Timeout:  60 * time.Second,
-		Database: os.Getenv("paragliding"),
-		Username: os.Getenv("admin"),
-		Password: os.Getenv("admin1"),
-	}
 	GlobalDB = &TrackMongoDB{
-		*mongoDialInfo,
 		"mongodb://admin:admin1@ds145562.mlab.com:45562/paragliding",
 		"paragliding",
 		"Tracks",
@@ -32,6 +23,7 @@ func main() {
 	}
 	paging = 5
 	GlobalDB.Init()
+	defer sessions.Close()
 	router := chi.NewRouter()
 	router.Route("/paragliding", func(r chi.Router) {
 		r.Route("/api", func(r chi.Router) {

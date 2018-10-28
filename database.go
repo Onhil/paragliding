@@ -33,7 +33,6 @@ var GlobalDB DatabaseInterface
 
 // TrackMongoDB is a struct with all neccessary MongoDB info
 type TrackMongoDB struct {
-	DatabaseInfo          mgo.DialInfo
 	DatabaseURL           string
 	DatabaseName          string
 	TrackCollectionName   string
@@ -42,11 +41,12 @@ type TrackMongoDB struct {
 
 // Init intializes MongoDB
 func (db *TrackMongoDB) Init() {
-	session, err := mgo.Dial(db.DatabaseURL)
+	var err error
+	sessions, err = mgo.Dial(db.DatabaseURL)
 	if err != nil {
 		panic(err)
 	}
-	defer session.Close()
+
 	index := mgo.Index{
 		Key:        []string{"TrackID"},
 		Unique:     true,
@@ -54,25 +54,23 @@ func (db *TrackMongoDB) Init() {
 		Background: true,
 		Sparse:     true,
 	}
-	err = session.DB(db.DatabaseName).C(db.TrackCollectionName).
+	err = sessions.DB(db.DatabaseName).C(db.TrackCollectionName).
 		EnsureIndex(index)
 	if err != nil {
 		panic(err)
 	}
+
 }
 
 // GetAll makes a slice with all TrackID's
 func (db *TrackMongoDB) GetAll() []int {
-	session, err := mgo.Dial(db.DatabaseURL)
-	if err != nil {
-		panic(err)
-	}
+	session := sessions.Copy()
 	defer session.Close()
 
 	var tracks []Track
 
 	// Puts all tracks in a Track slice
-	err = session.DB(db.DatabaseName).C(db.TrackCollectionName).
+	err := session.DB(db.DatabaseName).C(db.TrackCollectionName).
 		Find(bson.M{}).All(&tracks)
 	if err != nil {
 		return []int{}
@@ -84,10 +82,7 @@ func (db *TrackMongoDB) GetAll() []int {
 
 // Add a track to the mongoDB
 func (db *TrackMongoDB) Add(url string) (int, error) {
-	session, err := mgo.Dial(db.DatabaseURL)
-	if err != nil {
-		panic(err)
-	}
+	session := sessions.Copy()
 	defer session.Close()
 
 	// TODO make sure you cannot add the same url twice
@@ -112,10 +107,7 @@ func (db *TrackMongoDB) Add(url string) (int, error) {
 
 // GetTrack gets track wid a a specific TrackID
 func (db *TrackMongoDB) GetTrack(id string) (Track, error) {
-	session, err := mgo.Dial(db.DatabaseURL)
-	if err != nil {
-		panic(err)
-	}
+	session := sessions.Copy()
 	defer session.Close()
 
 	// Converts the id string to int
@@ -161,15 +153,12 @@ func (db *TrackMongoDB) TickerLatest() (Track, error) {
 // timestamp for the "paging". Lastly it returns the proccessing time
 func (db *TrackMongoDB) Ticker() (Ticker, error) {
 	proccess := time.Now()
-	session, err := mgo.Dial(db.DatabaseURL)
-	if err != nil {
-		panic(err)
-	}
+	session := sessions.Copy()
 	defer session.Close()
 
 	var latest Track
 	var start Track
-	stop := make([]Track, paging, paging)
+	stop := make([]Track, paging)
 
 	collection := session.DB(db.DatabaseName).C(db.TrackCollectionName)
 	if size, err := collection.Count(); err != nil {
@@ -205,15 +194,12 @@ func (db *TrackMongoDB) Ticker() (Ticker, error) {
 // TickerTimestamp TODO
 func (db *TrackMongoDB) TickerTimestamp(ts string) (Ticker, error) {
 	proccess := time.Now()
-	session, err := mgo.Dial(db.DatabaseURL)
-	if err != nil {
-		panic(err)
-	}
+	session := sessions.Copy()
 	defer session.Close()
 
 	var latest Track
 	var start Track
-	stop := make([]Track, paging, paging)
+	stop := make([]Track, paging)
 
 	collection := session.DB(db.DatabaseName).C(db.TrackCollectionName)
 	if size, err := collection.Count(); err != nil {
@@ -247,17 +233,14 @@ func (db *TrackMongoDB) TickerTimestamp(ts string) (Ticker, error) {
 
 // GetAllWebhooks gets all
 func (db *TrackMongoDB) GetAllWebhooks() []int {
-	session, err := mgo.Dial(db.DatabaseURL)
-	if err != nil {
-		panic(err)
-	}
+	session := sessions.Copy()
 	defer session.Close()
 
 	var webhooks []Webhooks
 
 	collection := session.DB(db.DatabaseName).C(db.WebhookCollectionName)
 
-	err = collection.Find(nil).All(&webhooks)
+	err := collection.Find(nil).All(&webhooks)
 	if err != nil {
 		return []int{}
 	}
@@ -266,10 +249,7 @@ func (db *TrackMongoDB) GetAllWebhooks() []int {
 
 // AddWebhook inserts webhook information into MongoDB
 func (db *TrackMongoDB) AddWebhook(url string, value int) (int, error) {
-	session, err := mgo.Dial(db.DatabaseURL)
-	if err != nil {
-		panic(err)
-	}
+	session := sessions.Copy()
 	defer session.Close()
 
 	// TODO make sure you cannot add the same url twice
@@ -292,10 +272,7 @@ func (db *TrackMongoDB) AddWebhook(url string, value int) (int, error) {
 
 // GetWebhook returns webhook with a specific id
 func (db *TrackMongoDB) GetWebhook(id string) (Webhooks, error) {
-	session, err := mgo.Dial(db.DatabaseURL)
-	if err != nil {
-		panic(err)
-	}
+	session := sessions.Copy()
 	defer session.Close()
 
 	var webhook Webhooks
@@ -317,13 +294,13 @@ func (db *TrackMongoDB) GetWebhook(id string) (Webhooks, error) {
 
 // DeleteWebhook removes webhook from MongoDB with a specific id
 func (db *TrackMongoDB) DeleteWebhook(id string) (Webhooks, error) {
-	session, err := mgo.Dial(db.DatabaseURL)
-	if err != nil {
-		panic(err)
-	}
+	session := sessions.Copy()
 	defer session.Close()
 
 	webhook, err := db.GetWebhook(id)
+	if err != nil {
+		return Webhooks{}, err
+	}
 
 	// Removes webhook with a specific id
 	collection := session.DB(db.DatabaseName).C(db.WebhookCollectionName)
@@ -337,10 +314,7 @@ func (db *TrackMongoDB) DeleteWebhook(id string) (Webhooks, error) {
 
 // TracksCount returns count of Track collection
 func (db *TrackMongoDB) TracksCount() (int, error) {
-	session, err := mgo.Dial(db.DatabaseURL)
-	if err != nil {
-		panic(err)
-	}
+	session := sessions.Copy()
 	defer session.Close()
 
 	// Returns length of Tracks
@@ -355,20 +329,13 @@ func (db *TrackMongoDB) TracksCount() (int, error) {
 // DeleteAllTracks WARNING!!!
 // Deletes all Tracks from MongoDB
 func (db *TrackMongoDB) DeleteAllTracks() (int, error) {
-	session, err := mgo.Dial(db.DatabaseURL)
-	if err != nil {
-		panic(err)
-	}
+	session := sessions.Copy()
 	defer session.Close()
 
-	collection := session.DB(db.DatabaseName).C(db.TrackCollectionName)
-
-	// Returns count of Track collection
-	ids, err := collection.Count()
+	// Removes all Tracks from Track collection
+	info, err := session.DB(db.DatabaseName).C(db.TrackCollectionName).RemoveAll(nil)
 	if err != nil {
 		return 0, err
 	}
-	// Removes all Tracks from MongoDB
-	collection.RemoveAll(nil)
-	return ids, nil
+	return info.Removed, nil
 }
