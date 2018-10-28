@@ -11,17 +11,6 @@ import (
 	"github.com/marni/goigc"
 )
 
-// TrackStorage TODO
-type TrackStorage interface {
-	Init()
-	GetAll() []int
-	Add(url string) (int, error)
-	GetTrack(idURL string) (Track, error)
-	TickerLatest() (Track, error)
-	Ticker() (Ticker, error)
-	TickerTimestamp(ts string) (Ticker, error)
-}
-
 // Track data
 type Track struct {
 	ID             bson.ObjectId `bson:"_id,omitempty"`

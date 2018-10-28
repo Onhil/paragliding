@@ -81,6 +81,7 @@ func getTickerLatest(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Returns ticker info for tracks
 func getTicker(w http.ResponseWriter, r *http.Request) {
 	if ticker, err := GlobalDB.Ticker(); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -89,6 +90,7 @@ func getTicker(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Returns ticker infor for tracks after a timestamp
 func getTickerTimestamp(w http.ResponseWriter, r *http.Request) {
 	timestamp := chi.URLParam(r, "timestamp")
 	if ticker, err := GlobalDB.TickerTimestamp(timestamp); err != nil {

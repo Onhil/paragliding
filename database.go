@@ -11,8 +11,25 @@ import (
 	"github.com/globalsign/mgo/bson"
 )
 
+// DatabaseInterface to better manage database functions
+type DatabaseInterface interface {
+	Init()
+	GetAll() []int
+	Add(url string) (int, error)
+	GetTrack(idURL string) (Track, error)
+	TickerLatest() (Track, error)
+	Ticker() (Ticker, error)
+	TickerTimestamp(ts string) (Ticker, error)
+	GetAllWebhooks() []int
+	AddWebhook(url string, value int) (int, error)
+	GetWebhook(id string) (Webhooks, error)
+	DeleteWebhook(id string) (Webhooks, error)
+	TracksCount() (int, error)
+	DeleteAllTracks() (int, error)
+}
+
 // GlobalDB interface for database use
-var GlobalDB TrackStorage
+var GlobalDB DatabaseInterface
 
 // TrackMongoDB is a struct with all neccessary MongoDB info
 type TrackMongoDB struct {
@@ -72,6 +89,8 @@ func (db *TrackMongoDB) Add(url string) (int, error) {
 		panic(err)
 	}
 	defer session.Close()
+
+	// TODO make sure you cannot add the same url twice
 
 	// Parses url and returns track object
 	track, err := Parse(url)
