@@ -17,6 +17,9 @@ type TrackStorage interface {
 	GetAll() []int
 	Add(url string) (int, error)
 	GetTrack(idURL string) (Track, error)
+	TickerLatest() (Track, error)
+	Ticker() (Ticker, error)
+	TickerTimestamp(ts string) (Ticker, error)
 }
 
 // Track data
@@ -29,14 +32,15 @@ type Track struct {
 	GliderID       string        `json:"glider_id"`
 	TrackLength    float64       `json:"track_length"`
 	TrackSourceURL string        `json:"track_src_url"`
+	Timestamp      bson.ObjectId `bson:"timestamp"`
 }
 
 // Ticker data
 type Ticker struct {
-	Latest     string        `json:"t_latest"`
-	Start      string        `json:"t_start"`
-	Stop       string        `json:"t_stop"`
-	Tracks     []Track       `json:"tracks"`
+	Latest     bson.ObjectId `json:"t_latest"`
+	Start      bson.ObjectId `json:"t_start"`
+	Stop       bson.ObjectId `json:"t_stop"`
+	Tracks     []int         `json:"tracks"`
 	Processing time.Duration `json:"processing"`
 }
 
@@ -73,6 +77,7 @@ func Parse(url string) (Track, error) {
 		GliderID:       track.GliderID,
 		TrackLength:    distance,
 		TrackSourceURL: url,
+		Timestamp:      bson.NewObjectIdWithTime(time.Now()),
 	}
 	return trac, nil
 }

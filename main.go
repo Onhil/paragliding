@@ -12,11 +12,12 @@ import (
 
 var startTime time.Time
 var session *mgo.Session
+var paging int
 
 func main() {
 	startTime = time.Now()
 	mongoDialInfo := &mgo.DialInfo{
-		Addrs:    []string{os.Getenv("mongodb://@ds145562.mlab.com:45562/paragliding")},
+		Addrs:    []string{"mongodb://admin:admin1@ds145562.mlab.com:45562/paragliding"},
 		Timeout:  60 * time.Second,
 		Database: os.Getenv("paragliding"),
 		Username: os.Getenv("admin"),
@@ -28,6 +29,7 @@ func main() {
 		"paragliding",
 		"Tracks",
 	}
+	paging = 5
 	GlobalDB.Init()
 	router := chi.NewRouter()
 	router.Route("/paragliding", func(r chi.Router) {
@@ -42,8 +44,9 @@ func main() {
 				})
 			})
 			r.Route("/ticker", func(r chi.Router) {
-				//r.Get("/latest/", )
-				//r.get("/{timestamp:[0-9]+}/", )
+				r.Get("/latest/", getTickerLatest)
+				r.Get("/", getTicker)
+				r.Get("/{timestamp:[A-Za-z0-9_]+}/", getTickerTimestamp)
 			})
 			r.Route("/weebhook", func(r chi.Router) {
 				r.Route("/new_track", func(r chi.Router) {

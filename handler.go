@@ -71,3 +71,29 @@ func getTrackField(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
+
+// Returns timestamp of latest added track
+func getTickerLatest(w http.ResponseWriter, r *http.Request) {
+	if track, err := GlobalDB.TickerLatest(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	} else {
+		render.JSON(w, r, track.Timestamp)
+	}
+}
+
+func getTicker(w http.ResponseWriter, r *http.Request) {
+	if ticker, err := GlobalDB.Ticker(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	} else {
+		render.JSON(w, r, ticker)
+	}
+}
+
+func getTickerTimestamp(w http.ResponseWriter, r *http.Request) {
+	timestamp := chi.URLParam(r, "timestamp")
+	if ticker, err := GlobalDB.TickerTimestamp(timestamp); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	} else {
+		render.JSON(w, r, ticker)
+	}
+}

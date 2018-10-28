@@ -3,7 +3,9 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
+	"time"
 
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
@@ -121,10 +123,104 @@ func (db *TrackMongoDB) TickerLatest() (Track, error) {
 
 	var track Track
 
-	err = session.DB(db.DatabaseName).C(db.TrackCollectionName).
-		Find(nil).Skip(len(GlobalDB.GetAll()) - 1).One(&track)
-	if err != nil {
-		return Track{}, err
+	// Returns the latest added track
+	collection := session.DB(db.DatabaseName).C(db.TrackCollectionName)
+	if size, err := collection.Count(); err != nil {
+		log.Fatal("Error: ", err)
+	} else {
+		err = collection.Find(nil).Skip(size - 1).One(&track)
+		if err != nil {
+			return Track{}, err
+		}
 	}
+
 	return track, nil
+}
+
+// Ticker returns the timestamp of the first added track and the first and last
+// timestamp for the "paging". Lastly it returns the proccessing time
+func (db *TrackMongoDB) Ticker() (Ticker, error) {
+	proccess := time.Now()
+	session, err := mgo.Dial(db.DatabaseURL)
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+
+	var latest Track
+	var start Track
+	stop := make([]Track, paging, paging)
+
+	collection := session.DB(db.DatabaseName).C(db.TrackCollectionName)
+	if size, err := collection.Count(); err != nil {
+		log.Fatal("Error: ", err)
+	} else {
+		// Finds the latest added track
+		err = collection.Find(nil).Skip(size - 1).One(&latest)
+		if err != nil {
+			return Ticker{}, err
+		}
+		// Finds the first added track
+		err = collection.Find(nil).One(&start)
+		if err != nil {
+			return Ticker{}, err
+		}
+		// Makes a Track slice with length paging
+		err = collection.Find(nil).SetMaxScan(paging).All(&stop)
+		if err != nil {
+			return Ticker{}, err
+		}
+	}
+
+	ticker := Ticker{
+		Latest:     latest.Timestamp,
+		Start:      start.Timestamp,
+		Stop:       stop[len(stop)-1].Timestamp,
+		Tracks:     TrackIDs(stop),
+		Processing: time.Since(proccess),
+	}
+	return ticker, nil
+}
+
+// TickerTimestamp TODO
+func (db *TrackMongoDB) TickerTimestamp(ts string) (Ticker, error) {
+	proccess := time.Now()
+	session, err := mgo.Dial(db.DatabaseURL)
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+
+	var latest Track
+	var start Track
+	stop := make([]Track, paging, paging)
+
+	collection := session.DB(db.DatabaseName).C(db.TrackCollectionName)
+	if size, err := collection.Count(); err != nil {
+		log.Fatal("Error: ", err)
+	} else {
+		// Finds the latest added track
+		err = collection.Find(nil).Skip(size - 1).One(&latest)
+		if err != nil {
+			return Ticker{}, err
+		}
+		// Finds track with a specific timestamp
+		err = collection.Find(bson.M{"timestamp": bson.ObjectIdHex(ts)}).One(&start)
+		if err != nil {
+			return Ticker{}, err
+		}
+		// Makes a Track slice with length paging from Track start
+		err = collection.Find(nil).SetMaxScan(start.TrackID + paging).All(&stop)
+		if err != nil {
+			return Ticker{}, err
+		}
+	}
+	ticker := Ticker{
+		Latest:     latest.Timestamp,
+		Start:      stop[0].Timestamp,
+		Stop:       stop[len(stop)-1].Timestamp,
+		Tracks:     TrackIDs(stop),
+		Processing: time.Since(proccess),
+	}
+	return ticker, nil
 }
