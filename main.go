@@ -63,8 +63,8 @@ func main() {
 	//
 	router.Route("/admin", func(r chi.Router) {
 		r.Route("/api", func(r chi.Router) {
-			//r.Get("/tracks_count/", )
-			//r.Delete("/tracks/", )
+			r.Get("/tracks_count/", trackCount)
+			r.Delete("/tracks/", deleteAllTracks)
 		})
 	})
 	//log.Fatal(http.ListenAndServe(":"+os.Getenv("PORT"), router)) // set listen port

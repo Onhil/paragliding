@@ -138,3 +138,25 @@ func deleteWebhookID(w http.ResponseWriter, r *http.Request) {
 		render.JSON(w, r, webhook)
 	}
 }
+
+// Returns track collectiion count
+func trackCount(w http.ResponseWriter, r *http.Request) {
+	if count, err := GlobalDB.TracksCount(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	} else {
+		response := make(map[string]int)
+		response["count"] = count
+		render.JSON(w, r, response)
+	}
+}
+
+// Deletes track collection and returns count
+func deleteAllTracks(w http.ResponseWriter, r *http.Request) {
+	if count, err := GlobalDB.DeleteAllTracks(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	} else {
+		response := make(map[string]int)
+		response["count"] = count
+		render.JSON(w, r, response)
+	}
+}

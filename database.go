@@ -315,3 +315,41 @@ func (db *TrackMongoDB) DeleteWebhook(id string) (Webhooks, error) {
 
 	return webhook, nil
 }
+
+// TracksCount returns count of Track collection
+func (db *TrackMongoDB) TracksCount() (int, error) {
+	session, err := mgo.Dial(db.DatabaseURL)
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+
+	// Returns length of Tracks
+	ids, err := session.DB(db.DatabaseName).C(db.TrackCollectionName).Count()
+	if err != nil {
+		return 0, err
+	}
+
+	return ids, nil
+}
+
+// DeleteAllTracks WARNING!!!
+// Deletes all Tracks from MongoDB
+func (db *TrackMongoDB) DeleteAllTracks() (int, error) {
+	session, err := mgo.Dial(db.DatabaseURL)
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+
+	collection := session.DB(db.DatabaseName).C(db.TrackCollectionName)
+
+	// Returns count of Track collection
+	ids, err := collection.Count()
+	if err != nil {
+		return 0, err
+	}
+	// Removes all Tracks from MongoDB
+	collection.RemoveAll(nil)
+	return ids, nil
+}
