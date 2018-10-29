@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Onhil/paragliding/database"
+	"github.com/Onhil/paragliding"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	"github.com/p3lim/iso8601"

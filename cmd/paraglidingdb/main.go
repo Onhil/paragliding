@@ -3,9 +3,10 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"time"
 
-	"github.com/Onhil/paragliding/database"
+	"github.com/Onhil/paragliding"
 	"github.com/go-chi/chi"
 )
 

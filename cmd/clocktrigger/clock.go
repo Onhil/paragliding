@@ -4,7 +4,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/Onhil/paragliding/database"
+	"github.com/Onhil/paragliding"
 	"github.com/globalsign/mgo"
 )
 
