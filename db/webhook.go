@@ -40,25 +40,14 @@ func CreateWebhook(url string, value int, c *mgo.Collection) (Webhooks, error) {
 }
 
 // SendMessage to a webhook about new track information
-func SendMessage(webhook Webhooks, tc *mgo.Collection, wc *mgo.Collection) error {
-	process := time.Now()
-	var tracks []Track
+func SendMessage(webhook Webhooks, tracks []Track, count int, process time.Time) (int, error) {
 	var newTracks []Track
-	err := tc.Find(nil).All(&tracks)
-	if err != nil {
-		return err
-	}
 	// Appends new tracks added since last invoke
-	for i := webhook.PrevTracksCount + 1; i < len(tracks); i++ {
+	for i := webhook.PrevTracksCount; i < len(tracks); i++ {
 		newTracks = append(newTracks, tracks[i])
 	}
 	ids := TrackIDs(newTracks)
 
-	// Count of Track collection
-	count, err := tc.Count()
-	if err != nil {
-		return err
-	}
 	// Creates message for webhook
 	m := map[string]interface{}{
 		"content": fmt.Sprintf("Latest timestamp: %s. New added tracks: %d [%d] (Processing time %s)",
@@ -69,21 +58,14 @@ func SendMessage(webhook Webhooks, tc *mgo.Collection, wc *mgo.Collection) error
 
 	b, err := json.Marshal(m)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	// Sends message to webhook
 	_, err = http.Post(webhook.WebhookURL, "application/json", bytes.NewBuffer(b))
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	// Updates PrevTracksCount to current track collection count
-	err = wc.Update(bson.M{}, bson.M{"$set": bson.M{"prevtrackscount": count}})
-	if err != nil {
-		return err
-	}
-	// Resets added since
-	err = wc.Update(bson.M{}, bson.M{"$set": bson.M{"addedsince": 0}})
-	return err
+	return count, nil
 }
