@@ -1,7 +1,13 @@
-package main
+package paragliding
 
 import (
-	"sort"
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"time"
+
+	"github.com/globalsign/mgo"
 
 	"github.com/globalsign/mgo/bson"
 )
@@ -16,24 +22,15 @@ type Webhooks struct {
 	PrevTracksCount int           `json:"prevtrackscount"`
 }
 
-// WebhookIDs returns a slice wtih all WebhookID's
-func WebhookIDs(db []Webhooks) []int {
-	// Stores all existing ID's in a slice
-	ids := make([]int, 0)
-	for i := range db {
-		ids = append(ids, db[i].WebhookID)
-	}
-	sort.Ints(ids)
-	return ids
-}
-
 // CreateWebhook from url and mintriggervalue data
-func CreateWebhook(url string, value int) (Webhooks, error) {
+func CreateWebhook(url string, value int, c *mgo.Collection) (Webhooks, error) {
 	var webhook Webhooks
-
-	id := len(GlobalDB.GetAllWebhooks()) + 1
+	id, err := c.Count()
+	if err != nil {
+		return Webhooks{}, err
+	}
 	webhook = Webhooks{
-		WebhookID:       id,
+		WebhookID:       id + 1,
 		WebhookURL:      url,
 		MinTriggerValue: value,
 	}

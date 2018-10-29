@@ -231,22 +231,6 @@ func (db *TrackMongoDB) TickerTimestamp(ts string) (Ticker, error) {
 	return ticker, nil
 }
 
-// GetAllWebhooks gets all
-func (db *TrackMongoDB) GetAllWebhooks() []int {
-	session := sessions.Copy()
-	defer session.Close()
-
-	var webhooks []Webhooks
-
-	collection := session.DB(db.DatabaseName).C(db.WebhookCollectionName)
-
-	err := collection.Find(nil).All(&webhooks)
-	if err != nil {
-		return []int{}
-	}
-	return WebhookIDs(webhooks)
-}
-
 // AddWebhook inserts webhook information into MongoDB
 func (db *TrackMongoDB) AddWebhook(url string, value int) (int, error) {
 	session := sessions.Copy()
