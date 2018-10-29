@@ -1,2 +1,2 @@
-web: paraglidingdb
+web: paragliding
 clock: clocktrigger
