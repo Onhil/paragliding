@@ -83,8 +83,5 @@ func SendMessage(webhook Webhooks, tc *mgo.Collection, wc *mgo.Collection) error
 	}
 	// Resets added since
 	err = wc.Update(bson.M{}, bson.M{"$set": bson.M{"addedsince": 0}})
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }

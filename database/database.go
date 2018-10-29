@@ -29,7 +29,11 @@ type DatabaseInterface interface {
 
 // GlobalDB interface for database use
 var GlobalDB DatabaseInterface
+
+// Sessions TODO
 var Sessions *mgo.Session
+
+// Paging TODO
 var Paging int
 
 // TrackMongoDB is a struct with all neccessary MongoDB info

@@ -4,7 +4,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/Onhil/paragliding"
+	"github.com/Onhil/paragliding/database"
 	"github.com/globalsign/mgo"
 )
 
@@ -25,10 +25,11 @@ func main() {
 		WebhookCollectionName: "Webhooks",
 	}
 	session, err := mgo.Dial(GlobalDB.DatabaseURL)
-	defer session.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer session.Close()
+
 	wc := session.DB(GlobalDB.DatabaseName).C(GlobalDB.WebhookCollectionName)
 	tc := session.DB(GlobalDB.DatabaseName).C(GlobalDB.TrackCollectionName)
 

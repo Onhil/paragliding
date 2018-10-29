@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Onhil/paragliding"
+	"github.com/Onhil/paragliding/database"
 	"github.com/go-chi/chi"
 )
 
