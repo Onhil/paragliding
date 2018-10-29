@@ -57,8 +57,8 @@ func main() {
 			r.Delete("/tracks/", deleteAllTracks)
 		})
 	})
-	//log.Fatal(http.ListenAndServe(":"+os.Getenv("PORT"), router)) // set listen port
+	log.Fatal(http.ListenAndServe(":"+os.Getenv("PORT"), router)) // set listen port
 
 	// localtesting
-	log.Fatal(http.ListenAndServe(":8080", router)) // set listen port
+	//log.Fatal(http.ListenAndServe(":8080", router)) // set listen port
 }
