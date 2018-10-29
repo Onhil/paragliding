@@ -226,7 +226,8 @@ func (db *TrackMongoDB) TickerTimestamp(ts string) (Ticker, error) {
 			return Ticker{}, err
 		}
 		// Makes a Track slice with length paging from Track start
-		err = collection.Find(nil).SetMaxScan(start.TrackID + Paging).All(&stop)
+		err = collection.Find(bson.M{"trackid": bson.M{"$gt": start.TrackID}}).
+			SetMaxScan(start.TrackID + Paging).All(&stop)
 		if err != nil {
 			return Ticker{}, err
 		}
