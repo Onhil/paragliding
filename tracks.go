@@ -7,6 +7,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/globalsign/mgo"
+
 	"github.com/globalsign/mgo/bson"
 	"github.com/marni/goigc"
 )
@@ -45,7 +47,7 @@ func TrackIDs(db []Track) []int {
 }
 
 // Parse url and makes a Track
-func Parse(url string) (Track, error) {
+func Parse(url string, c *mgo.Collection) (Track, error) {
 	track, err := igc.ParseLocation(url)
 	if err != nil {
 		return Track{}, err
@@ -56,10 +58,15 @@ func Parse(url string) (Track, error) {
 	for i := 0; i < len(track.Points)-1; i++ {
 		distance += track.Points[i].Distance(track.Points[i+1])
 	}
-	id := len(GlobalDB.GetAll()) + 1
+
+	// Returns count of Track Collection
+	id, err := c.Count()
+	if err != nil {
+		return Track{}, err
+	}
 
 	trac := Track{
-		TrackID:        id,
+		TrackID:        id + 1,
 		HDate:          track.Date,
 		Pilot:          track.Pilot,
 		Glider:         track.GliderType,

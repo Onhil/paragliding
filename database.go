@@ -88,7 +88,7 @@ func (db *TrackMongoDB) Add(url string) (int, error) {
 	// TODO make sure you cannot add the same url twice
 
 	// Parses url and returns track object
-	track, err := Parse(url)
+	track, err := Parse(url, collection)
 	if err != nil {
 		return 0, err
 	}
