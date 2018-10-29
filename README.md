@@ -13,9 +13,9 @@ It's an RESTful API with 13 available calls:
 	Array of all stored tracks
 - `POST /api/track`
 	Takes `{"url":"<url>"}` as JSON data and returns the assigned ID.
-- `GET /api/igc/<id>`
+- `GET /api/track/<id>`
 	Returns track data (fields) for a valid `id`
-- `GET /api/igc/<id>/<field>`
+- `GET /api/track/<id>/<field>`
 	Returns track `field` for a valid `id` and `field`
 
 ## Ticker
