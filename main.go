@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/Onhil/paragliding"
+	"github.com/Onhil/paragliding/db"
 	"github.com/go-chi/chi"
 )
 
