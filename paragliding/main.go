@@ -5,25 +5,23 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/globalsign/mgo"
+	"github.com/Onhil/paragliding"
 	"github.com/go-chi/chi"
 )
 
 var startTime time.Time
-var sessions *mgo.Session
-var paging int
 
 func main() {
 	startTime = time.Now()
-	GlobalDB = &TrackMongoDB{
-		"mongodb://admin:admin1@ds145562.mlab.com:45562/paragliding",
-		"paragliding",
-		"Tracks",
-		"Webhooks",
+	paragliding.GlobalDB = &paragliding.TrackMongoDB{
+		DatabaseURL:           "mongodb://admin:admin1@ds145562.mlab.com:45562/paragliding",
+		DatabaseName:          "paragliding",
+		TrackCollectionName:   "Tracks",
+		WebhookCollectionName: "Webhooks",
 	}
-	paging = 5
-	GlobalDB.Init()
-	defer sessions.Close()
+	paragliding.Paging = 5
+	paragliding.GlobalDB.Init()
+	defer paragliding.Sessions.Close()
 	router := chi.NewRouter()
 	router.Route("/paragliding", func(r chi.Router) {
 		r.Route("/api", func(r chi.Router) {
