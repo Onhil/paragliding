@@ -1,4 +1,4 @@
-package main
+package paragliding
 
 import (
 	"errors"
@@ -20,7 +20,6 @@ type DatabaseInterface interface {
 	TickerLatest() (Track, error)
 	Ticker() (Ticker, error)
 	TickerTimestamp(ts string) (Ticker, error)
-	GetAllWebhooks() []int
 	AddWebhook(url string, value int) (int, error)
 	GetWebhook(id string) (Webhooks, error)
 	DeleteWebhook(id string) (Webhooks, error)
@@ -30,6 +29,8 @@ type DatabaseInterface interface {
 
 // GlobalDB interface for database use
 var GlobalDB DatabaseInterface
+var Sessions *mgo.Session
+var Paging int
 
 // TrackMongoDB is a struct with all neccessary MongoDB info
 type TrackMongoDB struct {
@@ -42,7 +43,7 @@ type TrackMongoDB struct {
 // Init intializes MongoDB
 func (db *TrackMongoDB) Init() {
 	var err error
-	sessions, err = mgo.Dial(db.DatabaseURL)
+	Sessions, err = mgo.Dial(db.DatabaseURL)
 	if err != nil {
 		panic(err)
 	}
@@ -54,7 +55,7 @@ func (db *TrackMongoDB) Init() {
 		Background: true,
 		Sparse:     true,
 	}
-	err = sessions.DB(db.DatabaseName).C(db.TrackCollectionName).
+	err = Sessions.DB(db.DatabaseName).C(db.TrackCollectionName).
 		EnsureIndex(index)
 	if err != nil {
 		panic(err)
@@ -64,7 +65,7 @@ func (db *TrackMongoDB) Init() {
 
 // GetAll makes a slice with all TrackID's
 func (db *TrackMongoDB) GetAll() []int {
-	session := sessions.Copy()
+	session := Sessions.Copy()
 	defer session.Close()
 
 	var tracks []Track
@@ -82,32 +83,37 @@ func (db *TrackMongoDB) GetAll() []int {
 
 // Add a track to the mongoDB
 func (db *TrackMongoDB) Add(url string) (int, error) {
-	session := sessions.Copy()
+	session := Sessions.Copy()
 	defer session.Close()
 
 	// TODO make sure you cannot add the same url twice
 
 	// Parses url and returns track object
+	collection := session.DB(db.DatabaseName).C(db.TrackCollectionName)
+	hookcollection := session.DB(db.DatabaseName).C(db.WebhookCollectionName)
 	track, err := Parse(url, collection)
 	if err != nil {
 		return 0, err
 	}
 
 	// Inserts track into mongoDB database
-	err = session.DB(db.DatabaseName).C(db.TrackCollectionName).
-		Insert(track)
 
+	err = collection.Insert(track)
 	if err != nil {
 		fmt.Printf("error in Insert(): %v", err.Error())
 		return 0, err
 	}
-
+	// Increases addedsince for webhook triggering
+	_, err = hookcollection.UpdateAll(bson.M{}, bson.M{"$inc": bson.M{"addedsince": 1}})
+	if err != nil {
+		log.Fatal(err)
+	}
 	return track.TrackID, nil
 }
 
 // GetTrack gets track wid a a specific TrackID
 func (db *TrackMongoDB) GetTrack(id string) (Track, error) {
-	session := sessions.Copy()
+	session := Sessions.Copy()
 	defer session.Close()
 
 	// Converts the id string to int
@@ -153,12 +159,12 @@ func (db *TrackMongoDB) TickerLatest() (Track, error) {
 // timestamp for the "paging". Lastly it returns the proccessing time
 func (db *TrackMongoDB) Ticker() (Ticker, error) {
 	proccess := time.Now()
-	session := sessions.Copy()
+	session := Sessions.Copy()
 	defer session.Close()
 
 	var latest Track
 	var start Track
-	stop := make([]Track, paging)
+	stop := make([]Track, Paging)
 
 	collection := session.DB(db.DatabaseName).C(db.TrackCollectionName)
 	if size, err := collection.Count(); err != nil {
@@ -175,7 +181,7 @@ func (db *TrackMongoDB) Ticker() (Ticker, error) {
 			return Ticker{}, err
 		}
 		// Makes a Track slice with length paging
-		err = collection.Find(nil).SetMaxScan(paging).All(&stop)
+		err = collection.Find(nil).SetMaxScan(Paging).All(&stop)
 		if err != nil {
 			return Ticker{}, err
 		}
@@ -194,12 +200,12 @@ func (db *TrackMongoDB) Ticker() (Ticker, error) {
 // TickerTimestamp TODO
 func (db *TrackMongoDB) TickerTimestamp(ts string) (Ticker, error) {
 	proccess := time.Now()
-	session := sessions.Copy()
+	session := Sessions.Copy()
 	defer session.Close()
 
 	var latest Track
 	var start Track
-	stop := make([]Track, paging)
+	stop := make([]Track, Paging)
 
 	collection := session.DB(db.DatabaseName).C(db.TrackCollectionName)
 	if size, err := collection.Count(); err != nil {
@@ -216,7 +222,7 @@ func (db *TrackMongoDB) TickerTimestamp(ts string) (Ticker, error) {
 			return Ticker{}, err
 		}
 		// Makes a Track slice with length paging from Track start
-		err = collection.Find(nil).SetMaxScan(start.TrackID + paging).All(&stop)
+		err = collection.Find(nil).SetMaxScan(start.TrackID + Paging).All(&stop)
 		if err != nil {
 			return Ticker{}, err
 		}
@@ -233,21 +239,19 @@ func (db *TrackMongoDB) TickerTimestamp(ts string) (Ticker, error) {
 
 // AddWebhook inserts webhook information into MongoDB
 func (db *TrackMongoDB) AddWebhook(url string, value int) (int, error) {
-	session := sessions.Copy()
+	session := Sessions.Copy()
 	defer session.Close()
 
+	collection := session.DB(db.DatabaseName).C(db.WebhookCollectionName)
 	// TODO make sure you cannot add the same url twice
 
 	// Creates webhook from data
-	webhook, err := CreateWebhook(url, value)
+	webhook, err := CreateWebhook(url, value, collection)
 	if err != nil {
 		return 0, err
 	}
-
 	// Inserts webhook into mongoDB database
-	err = session.DB(db.DatabaseName).C(db.WebhookCollectionName).
-		Insert(webhook)
-	if err != nil {
+	if err = collection.Insert(webhook); err != nil {
 		return 0, err
 	}
 
@@ -256,7 +260,7 @@ func (db *TrackMongoDB) AddWebhook(url string, value int) (int, error) {
 
 // GetWebhook returns webhook with a specific id
 func (db *TrackMongoDB) GetWebhook(id string) (Webhooks, error) {
-	session := sessions.Copy()
+	session := Sessions.Copy()
 	defer session.Close()
 
 	var webhook Webhooks
@@ -278,7 +282,7 @@ func (db *TrackMongoDB) GetWebhook(id string) (Webhooks, error) {
 
 // DeleteWebhook removes webhook from MongoDB with a specific id
 func (db *TrackMongoDB) DeleteWebhook(id string) (Webhooks, error) {
-	session := sessions.Copy()
+	session := Sessions.Copy()
 	defer session.Close()
 
 	webhook, err := db.GetWebhook(id)
@@ -298,7 +302,7 @@ func (db *TrackMongoDB) DeleteWebhook(id string) (Webhooks, error) {
 
 // TracksCount returns count of Track collection
 func (db *TrackMongoDB) TracksCount() (int, error) {
-	session := sessions.Copy()
+	session := Sessions.Copy()
 	defer session.Close()
 
 	// Returns length of Tracks
@@ -310,10 +314,10 @@ func (db *TrackMongoDB) TracksCount() (int, error) {
 	return ids, nil
 }
 
-// DeleteAllTracks WARNING!!!
+// DeleteAllTracks WARNINvar Paging int!!!
 // Deletes all Tracks from MongoDB
 func (db *TrackMongoDB) DeleteAllTracks() (int, error) {
-	session := sessions.Copy()
+	session := Sessions.Copy()
 	defer session.Close()
 
 	// Removes all Tracks from Track collection
