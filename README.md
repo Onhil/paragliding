@@ -37,7 +37,15 @@ It's an RESTful API with 13 available calls:
 - `DELETE /api/webhook/new_track/<id>`
     Deletes webhook with that id
 
+## Admin
+- `GET /admin/api/tracks_count`
+    Returns number of tracks in collection
+- `DELETE /admin/api/tracks`
+    Deletes all tracks in collection
 
 	
 Demo of app
  - `https://paraglidingjg.herokuapp.com/`
+
+Clock trigger
+- `https://github.com/Onhil/clocktrigger`
